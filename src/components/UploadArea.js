@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import './UploadArea.css';
 import { UploadCloud, Image as ImageIcon } from 'lucide-react';
 
-export default function UploadArea({ onFileSelect }) {
+export default function UploadArea({ onFileSelect, onPreview }) {
   const [dragActive, setDragActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const inputRef = useRef(null);
@@ -23,6 +23,7 @@ export default function UploadArea({ onFileSelect }) {
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
       onFileSelect(file);
+      if (onPreview) onPreview(url);
     }
   };
 
@@ -50,6 +51,7 @@ export default function UploadArea({ onFileSelect }) {
     e.stopPropagation();
     setPreviewUrl(null);
     onFileSelect(null);
+    if (onPreview) onPreview(null);
     if (inputRef.current) inputRef.current.value = "";
   };
 

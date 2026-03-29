@@ -1,10 +1,11 @@
 "use client";
-import { useState } from 'react';
+import React, { useState } from 'react';
 import './ImageResult.css';
 import Button from './Button';
 import { Send, Download, RefreshCw } from 'lucide-react';
+import BeforeAfterSlider from './BeforeAfterSlider';
 
-export default function ImageResult({ imageUrl, onChatSubmit, onReset }) {
+export default function ImageResult({ imageUrl, beforeImage, onChatSubmit, onReset }) {
   const [chatMessage, setChatMessage] = useState("");
 
   const handleDownload = () => {
@@ -31,7 +32,10 @@ export default function ImageResult({ imageUrl, onChatSubmit, onReset }) {
       </div>
       
       <div className="image-wrapper">
-        <img src={imageUrl} alt="Ambiente Gerado" className="result-image" />
+        <BeforeAfterSlider 
+          beforeImage={beforeImage || imageUrl} 
+          afterImage={imageUrl} 
+        />
       </div>
 
       <div className="chat-interface">
@@ -61,4 +65,3 @@ export default function ImageResult({ imageUrl, onChatSubmit, onReset }) {
     </div>
   );
 }
-

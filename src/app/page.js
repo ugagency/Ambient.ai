@@ -9,11 +9,12 @@ import Button from "../components/Button";
 import Loader from "../components/Loader";
 import ImageResult from "../components/ImageResult";
 import HistorySidebar from "../components/HistorySidebar";
-import { Zap, LogOut, User, Menu } from "lucide-react";
+import { Zap, LogOut, User, History } from "lucide-react";
 
 export default function Home() {
   const [status, setStatus] = useState("idle"); // idle, loading, success, error
   const [selectedFile, setSelectedFile] = useState(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState(null);
   const [currentBlob, setCurrentBlob] = useState(null); 
   const [user, setUser] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -172,6 +173,10 @@ export default function Home() {
       console.error("Não foi possível carregar o blob original para refinamento.");
     }
 
+    // Nota: No histórico, não temos a imagem "Original" salva separadamente (o n8n gera a nova).
+    // Para simplificar, desativaremos o slider no histórico ou mostraremos a mesma imagem.
+    setOriginalImageUrl(gen.generated_image_url);
+
     setFormValues({
       ambiente: gen.settings.ambiente || "Outro",
       customAmbiente: gen.settings.ambiente || "",
@@ -190,6 +195,7 @@ export default function Home() {
     setResultImageUrl(null);
     setCurrentBlob(null);
     setSelectedFile(null);
+    setOriginalImageUrl(null);
   };
 
   return (
@@ -204,11 +210,19 @@ export default function Home() {
       <nav className="user-nav fade-in">
         {user && (
           <div className="user-info">
-            <User size={16} />
-            <span>{user.email}</span>
+            <button onClick={() => setHistoryOpen(true)} className="nav-btn" title="Histórico">
+              <History size={16} />
+              <span>Histórico</span>
+            </button>
             <div className="divider"></div>
-            <button onClick={handleLogout} className="logout-btn" title="Sair">
+            <div className="user-details">
+              <User size={16} />
+              <span>{user.email}</span>
+            </div>
+            <div className="divider"></div>
+            <button onClick={handleLogout} className="nav-btn logout-btn" title="Sair">
               <LogOut size={16} />
+              <span>Sair</span>
             </button>
           </div>
         )}
@@ -224,7 +238,7 @@ export default function Home() {
 
         {status === "idle" || status === "error" ? (
           <>
-            <UploadArea onFileSelect={setSelectedFile} />
+            <UploadArea onFileSelect={setSelectedFile} onPreview={setOriginalImageUrl} />
             <FormPanel values={formValues} onChange={handleFormChange} />
             <Button onClick={handleStartProject} disabled={!selectedFile}>
               <Zap size={20} /> Começar Projeto
@@ -236,7 +250,12 @@ export default function Home() {
 
         {status === "success" && resultImageUrl && (
           <div ref={resultRef} className="width-full pt-8">
-            <ImageResult imageUrl={resultImageUrl} onChatSubmit={handleRefineChat} onReset={handleReset} />
+            <ImageResult 
+              imageUrl={resultImageUrl} 
+              beforeImage={originalImageUrl} 
+              onChatSubmit={handleRefineChat} 
+              onReset={handleReset} 
+            />
           </div>
         )}
       </section>
@@ -245,22 +264,49 @@ export default function Home() {
         .user-nav {
           width: 100%;
           display: flex;
-          justify-content: flex-end;
-          margin-bottom: -1rem;
+          justify-content: center;
+          margin-bottom: 2rem;
+          z-index: 10;
         }
         .user-info {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          background: var(--bg-panel);
-          padding: 0.5rem 1rem;
-          border-radius: 20px;
-          border: 1px solid var(--border-color);
+          gap: 0.5rem;
+          background: rgba(255, 255, 255, 0.5);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          padding: 0.5rem 0.75rem;
+          border-radius: 100px;
+          border: 1px solid rgba(255, 255, 255, 0.4);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
           font-size: 0.85rem;
           color: var(--text-secondary);
         }
-        .divider { width: 1px; height: 14px; background: var(--border-color); }
-        .logout-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; padding: 2px; }
+        .user-details {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0 0.5rem;
+          opacity: 0.8;
+        }
+        .divider { width: 1px; height: 16px; background: rgba(0,0,0,0.1); margin: 0 0.25rem; }
+        .nav-btn { 
+          background: none; 
+          border: none; 
+          color: var(--text-secondary); 
+          cursor: pointer; 
+          display: flex; 
+          align-items: center; 
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          border-radius: 100px;
+          transition: all 0.2s ease;
+          font-weight: 500;
+        }
+        .nav-btn:hover { 
+          background: rgba(255, 255, 255, 0.4);
+          color: var(--text-primary); 
+        }
         .logout-btn:hover { color: var(--danger-color); }
         .width-full { width: 100%; }
         .pt-8 { padding-top: 2rem; }
