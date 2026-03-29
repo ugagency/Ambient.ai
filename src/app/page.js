@@ -23,6 +23,7 @@ export default function Home() {
     customAmbiente: "",
     estilo: "Moderno",
     orcamento: "Médio",
+    intensidade: "Média",
     preferencias: ""
   });
 
@@ -83,6 +84,7 @@ export default function Home() {
             ambiente: finalAmbiente,
             estilo: formValues.estilo,
             orcamento: formValues.orcamento,
+            intensidade: formValues.intensidade,
             preferencias: prefs
           }
         });
@@ -111,6 +113,7 @@ export default function Home() {
     formData.append("ambiente", finalAmbiente);
     formData.append("estilo", formValues.estilo);
     formData.append("orcamento", formValues.orcamento);
+    formData.append("intensidade", formValues.intensidade);
     formData.append("preferencias", formValues.preferencias);
 
     await performRequest(formData, finalAmbiente, formValues.preferencias);
@@ -127,6 +130,7 @@ export default function Home() {
     formData.append("ambiente", finalAmbiente);
     formData.append("estilo", formValues.estilo);
     formData.append("orcamento", formValues.orcamento);
+    formData.append("intensidade", formValues.intensidade);
     formData.append("preferencias", message);
 
     await performRequest(formData, finalAmbiente, message);
@@ -173,6 +177,7 @@ export default function Home() {
       customAmbiente: gen.settings.ambiente || "",
       estilo: gen.settings.estilo || "Moderno",
       orcamento: gen.settings.orcamento || "Médio",
+      intensidade: gen.settings.intensidade || "Média",
       preferencias: gen.settings.preferencias || ""
     });
 

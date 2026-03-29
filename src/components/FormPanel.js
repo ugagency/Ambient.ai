@@ -48,7 +48,6 @@ export default function FormPanel({ values, onChange }) {
         </div>
       )}
 
-
       <div className="form-group">
         <label className="form-label" htmlFor="estilo">
           Estilo Desejado
@@ -82,6 +81,23 @@ export default function FormPanel({ values, onChange }) {
           <option value="Baixo">Econômico (Baixo)</option>
           <option value="Médio">Padrão (Médio)</option>
           <option value="Alto">Premium (Alto)</option>
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label" htmlFor="intensidade">
+          Intensidade de Mudança
+        </label>
+        <select 
+          id="intensidade" 
+          name="intensidade" 
+          className="form-select" 
+          value={values.intensidade} 
+          onChange={handleChange}
+        >
+          <option value="Baixa">Discreta (Baixa)</option>
+          <option value="Média">Equilibrada (Média)</option>
+          <option value="Alta">Transformadora (Alta)</option>
         </select>
       </div>
 
