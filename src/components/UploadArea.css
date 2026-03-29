@@ -1,0 +1,86 @@
+/* UploadArea.css */
+.upload-wrapper {
+  background: #fdfbf7;
+  border: 1px dashed var(--accent-color);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-wrapper:hover {
+  background: #f5f0e6;
+}
+
+.upload-wrapper.drag-active {
+  border: 2px solid var(--accent-color);
+  background: #f5f0e6;
+  transform: scale(1.01);
+}
+
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  pointer-events: none; /* Let drag events pass through */
+}
+
+.upload-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--text-primary);
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+}
+
+.upload-text {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.upload-subtext {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  object-fit: cover;
+}
+
+.change-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.change-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+  background: rgba(0,0,0,0.03);
+}
+
+.file-input {
+  display: none;
+}
+
