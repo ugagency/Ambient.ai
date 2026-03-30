@@ -41,8 +41,10 @@ export default function LoginPage() {
     <main className="app-container">
       <div className="login-container fade-in">
         <header className="app-header">
-          <h1 className="app-title">Ambient AI</h1>
-          <p className="app-subtitle">Sua jornada de design começa aqui</p>
+          <div className="logo-container">
+            <img src="/logo.png" alt="Reformei" className="app-logo" />
+          </div>
+          <p className="app-subtitle">Sua jornada de reforma começa aqui</p>
         </header>
 
         <div className="login-card slide-up">

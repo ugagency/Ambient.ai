@@ -9,7 +9,7 @@ import Button from "../components/Button";
 import Loader from "../components/Loader";
 import ImageResult from "../components/ImageResult";
 import HistorySidebar from "../components/HistorySidebar";
-import { Zap, LogOut, User, History } from "lucide-react";
+import { Zap, LogOut, User, History, Sun, Moon } from "lucide-react";
 
 export default function Home() {
   const [status, setStatus] = useState("idle"); // idle, loading, success, error
@@ -27,6 +27,7 @@ export default function Home() {
     intensidade: "Média",
     preferencias: ""
   });
+  const [theme, setTheme] = useState("light");
 
   const [resultImageUrl, setResultImageUrl] = useState(null);
   const resultRef = useRef(null);
@@ -43,7 +44,19 @@ export default function Home() {
       }
     };
     getUser();
+
+    // Dark mode logic
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+    document.documentElement.setAttribute("data-theme", savedTheme);
   }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+  };
 
   useEffect(() => {
     if (status === "success" && resultRef.current) {
@@ -220,6 +233,11 @@ export default function Home() {
               <span>{user.email}</span>
             </div>
             <div className="divider"></div>
+            <button onClick={toggleTheme} className="nav-btn theme-btn" title="Alternar Tema">
+              {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+              <span>{theme === "light" ? "Modo Escuro" : "Modo Claro"}</span>
+            </button>
+            <div className="divider"></div>
             <button onClick={handleLogout} className="nav-btn logout-btn" title="Sair">
               <LogOut size={16} />
               <span>Sair</span>
@@ -229,7 +247,9 @@ export default function Home() {
       </nav>
 
       <header className="app-header fade-in">
-        <h1 className="app-title">Ambient AI</h1>
+        <div className="logo-container">
+          <img src="/logo.png" alt="Reformei" className="app-logo" />
+        </div>
         <p className="app-subtitle">Recrie seu espaço com Inteligência Artificial</p>
       </header>
 
@@ -308,6 +328,16 @@ export default function Home() {
           color: var(--text-primary); 
         }
         .logout-btn:hover { color: var(--danger-color); }
+        .logo-container {
+          margin-bottom: 1rem;
+          display: flex;
+          justify-content: center;
+        }
+        .app-logo {
+          height: 60px;
+          width: auto;
+          object-fit: contain;
+        }
         .width-full { width: 100%; }
         .pt-8 { padding-top: 2rem; }
       `}</style>

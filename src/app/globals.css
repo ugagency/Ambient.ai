@@ -1,13 +1,25 @@
 :root {
-  --bg-color: #faf9f6; /* Off-white/pearl */
+  --bg-color: #efefef; /* Cinza muito claro */
   --bg-panel: #ffffff;
-  --text-primary: #1c1c1c; /* Almost black */
-  --text-secondary: #5a5a5a;
-  --accent-color: #c9b188; /* Elegant beige/gold */
-  --accent-color-hover: #b49b72;
-  --border-color: #e5e0d8; /* Light beige border */
+  --text-primary: #1c1c1c; 
+  --text-secondary: #064439; /* Verde escuro para escrita */
+  --accent-color: #106558; /* Verde da marca */
+  --accent-color-hover: #0a4a40;
+  --border-color: #d1d1d1;
   --danger-color: #ef4444;
   --success-color: #10b981;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0b1a18; /* Marinho/Verde muito profundo */
+  --bg-panel: #122926;
+  --text-primary: #f0fdfa; 
+  --text-secondary: #94b8b2;
+  --accent-color: #14b8a6; /* Verde mais vibrante para contraste */
+  --accent-color-hover: #0d9488;
+  --border-color: #233d39;
+  --danger-color: #f87171;
+  --success-color: #34d399;
 }
 
 * {

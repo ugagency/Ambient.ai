@@ -8,8 +8,8 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "Ambient AI - Design de Interiores",
-  description: "Recrie seu espaço com Inteligência Artificial. Ambient AI ajuda você a redecorar o seu lar.",
+  title: "Reformei - Design de Interiores",
+  description: "Recrie seu espaço com Inteligência Artificial. Reformei ajuda você a planejar sua reforma.",
 };
 
 export default function RootLayout({ children }) {
