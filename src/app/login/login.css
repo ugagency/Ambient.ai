@@ -30,6 +30,26 @@
   margin-bottom: 0.5rem;
 }
 
+.app-logo {
+  height: 45px;
+  width: auto;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.5rem;
+    border-radius: 20px;
+    gap: 1.5rem;
+  }
+  .app-logo {
+    height: 35px;
+  }
+  .login-title {
+    font-size: 1.6rem;
+  }
+}
+
 .login-title {
   font-size: 2rem;
   font-weight: 300;

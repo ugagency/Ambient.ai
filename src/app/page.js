@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import UploadArea from "../components/UploadArea";
 import FormPanel from "../components/FormPanel";
 import Button from "../components/Button";
@@ -17,6 +18,7 @@ export default function Home() {
   const [originalImageUrl, setOriginalImageUrl] = useState(null);
   const [currentBlob, setCurrentBlob] = useState(null); 
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [refreshHistory, setRefreshHistory] = useState(0);
   const [formValues, setFormValues] = useState({
@@ -36,14 +38,27 @@ export default function Home() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
         router.push("/login");
       } else {
-        setUser(user);
+        setUser(authUser);
+        fetchProfile(authUser.id);
       }
     };
     getUser();
+
+    const fetchProfile = async (userId) => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (!error && data) {
+        setUserProfile(data);
+      }
+    };
 
     // Dark mode logic
     const savedTheme = localStorage.getItem("theme") || "light";
@@ -152,12 +167,28 @@ export default function Home() {
 
   const performRequest = async (formData, finalAmbiente, currentPrefs) => {
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_WEBHOOK_URL, {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch("/api/generate", {
         method: "POST",
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Erro na rede.");
+      if (response.status === 402) {
+        setStatus("idle");
+        if (confirm("Você atingiu seu limite de créditos diários ou não possui saldo. Deseja adquirir mais créditos ou assinar um plano?")) {
+          router.push("/pricing");
+        }
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro na geração.");
+      }
 
       const blob = await response.blob();
       const imageUrl = URL.createObjectURL(blob);
@@ -165,6 +196,14 @@ export default function Home() {
       setCurrentBlob(blob);
       setResultImageUrl(imageUrl);
       setStatus("success");
+
+      // Atualiza o perfil para refletir o crédito usado
+      const { data: updatedProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      setUserProfile(updatedProfile);
 
       saveGenerationToSupabase(blob, finalAmbiente, currentPrefs);
     } catch (error) {
@@ -220,38 +259,51 @@ export default function Home() {
         refreshTrigger={refreshHistory}
       />
 
-      <nav className="user-nav fade-in">
-        {user && (
-          <div className="user-info">
-            <button onClick={() => setHistoryOpen(true)} className="nav-btn" title="Histórico">
-              <History size={16} />
-              <span>Histórico</span>
-            </button>
-            <div className="divider"></div>
-            <div className="user-details">
-              <User size={16} />
-              <span>{user.email}</span>
-            </div>
-            <div className="divider"></div>
-            <button onClick={toggleTheme} className="nav-btn theme-btn" title="Alternar Tema">
-              {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-              <span>{theme === "light" ? "Modo Escuro" : "Modo Claro"}</span>
-            </button>
-            <div className="divider"></div>
-            <button onClick={handleLogout} className="nav-btn logout-btn" title="Sair">
-              <LogOut size={16} />
-              <span>Sair</span>
-            </button>
+      <header className="main-navbar fade-in">
+        <div className="navbar-content">
+          <div className="logo-section" onClick={handleReset} style={{ cursor: 'pointer' }}>
+            <img src="/logo.png" alt="Reformei" className="app-logo" />
+            <h1 className="logo-text">Reformei</h1>
           </div>
-        )}
-      </nav>
 
-      <header className="app-header fade-in">
-        <div className="logo-container">
-          <img src="/logo.png" alt="Reformei" className="app-logo" />
+          {user && (
+            <div className="nav-actions">
+              {userProfile && (
+                <div className="credits-display">
+                  <span className="plan-badge">{userProfile.plan_type.toUpperCase()}</span>
+                  <span className="credits-text">
+                    {userProfile.plan_type === 'pro' ? (
+                      "∞ Créditos"
+                    ) : (
+                      <>
+                        {Math.max(0, (userProfile.plan_type === 'essencial' ? 15 : 5) - userProfile.daily_credits_used)} Diários 
+                        {userProfile.extra_credits_balance > 0 && ` + ${userProfile.extra_credits_balance} Extras`}
+                      </>
+                    )}
+                  </span>
+                </div>
+              )}
+              <div className="divider"></div>
+              <Link href="/pricing" className="nav-link">Planos</Link>
+              <div className="divider"></div>
+              <button onClick={() => setHistoryOpen(true)} className="nav-btn history-btn">
+                <History size={18} />
+                <span className="hide-mobile">Histórico</span>
+              </button>
+              <button onClick={toggleTheme} className="nav-btn theme-btn">
+                {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+              </button>
+              <button onClick={handleLogout} className="nav-btn logout-btn">
+                <LogOut size={18} />
+              </button>
+            </div>
+          )}
         </div>
-        <p className="app-subtitle">Recrie seu espaço com Inteligência Artificial</p>
       </header>
+
+      <section className="hero-section fade-in">
+        <p className="app-subtitle">Recrie seu espaço com Inteligência Artificial</p>
+      </section>
 
       <section className="main-content">
         {status === "error" && <div className="error-message">Falha ao gerar o ambiente.</div>}
@@ -281,35 +333,78 @@ export default function Home() {
       </section>
 
       <style jsx>{`
-        .user-nav {
+        .main-navbar {
           width: 100%;
-          display: flex;
-          justify-content: center;
-          margin-bottom: 2rem;
-          z-index: 10;
-        }
-        .user-info {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: rgba(255, 255, 255, 0.5);
+          padding: 1rem 0;
+          background: rgba(255, 255, 255, 0.7);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          padding: 0.5rem 0.75rem;
-          border-radius: 100px;
-          border: 1px solid rgba(255, 255, 255, 0.4);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-          font-size: 0.85rem;
-          color: var(--text-secondary);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+          position: sticky;
+          top: 0;
+          z-index: 100;
         }
-        .user-details {
+        .navbar-content {
+          max-width: 1200px;
+          margin: 0 auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 1.5rem;
+        }
+        .logo-section {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0 0.5rem;
-          opacity: 0.8;
+          gap: 0.75rem;
         }
-        .divider { width: 1px; height: 16px; background: rgba(0,0,0,0.1); margin: 0 0.25rem; }
+        .app-logo {
+          height: 32px;
+          width: auto;
+        }
+        .logo-text {
+          font-size: 1.4rem;
+          font-weight: 700;
+          color: var(--primary-color);
+          margin: 0;
+          letter-spacing: -0.5px;
+        }
+        .nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        .credits-display {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 0.4rem 0.8rem;
+          background: rgba(0,0,0,0.03);
+          border-radius: 50px;
+        }
+        .plan-badge {
+          background: var(--accent-color);
+          color: white;
+          padding: 1px 6px;
+          border-radius: 4px;
+          font-size: 0.6rem;
+          font-weight: 800;
+        }
+        .credits-text {
+          font-weight: 600;
+          color: var(--text-primary);
+          font-size: 0.8rem;
+          white-space: nowrap;
+        }
+        .divider { width: 1px; height: 16px; background: rgba(0,0,0,0.1); margin: 0 0.5rem; }
+        .nav-link {
+          color: var(--text-primary);
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 0.85rem;
+          padding: 0.5rem 0.75rem;
+          transition: color 0.2s;
+        }
+        .nav-link:hover { color: var(--accent-color); }
         .nav-btn { 
           background: none; 
           border: none; 
@@ -317,26 +412,28 @@ export default function Home() {
           cursor: pointer; 
           display: flex; 
           align-items: center; 
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
-          border-radius: 100px;
+          padding: 0.5rem;
+          border-radius: 50%;
           transition: all 0.2s ease;
-          font-weight: 500;
         }
-        .nav-btn:hover { 
-          background: rgba(255, 255, 255, 0.4);
-          color: var(--text-primary); 
-        }
+        .nav-btn:hover { background: rgba(0, 0, 0, 0.05); color: var(--text-primary); }
         .logout-btn:hover { color: var(--danger-color); }
-        .logo-container {
-          margin-bottom: 1rem;
-          display: flex;
-          justify-content: center;
+        
+        .hero-section {
+          padding-top: 3rem;
+          text-align: center;
         }
-        .app-logo {
-          height: 60px;
-          width: auto;
-          object-fit: contain;
+        .app-subtitle {
+          color: var(--text-secondary);
+          font-size: 1.1rem;
+          font-weight: 300;
+          max-width: 600px;
+          margin: 0 auto 2rem;
+        }
+
+        @media (max-width: 768px) {
+          .logo-text, .hide-mobile, .divider { display: none; }
+          .navbar-content { padding: 0 1rem; }
         }
         .width-full { width: 100%; }
         .pt-8 { padding-top: 2rem; }
