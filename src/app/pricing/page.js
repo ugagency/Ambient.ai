@@ -40,7 +40,7 @@ const plans = [
     buttonText: "Assinar Agora",
     highlight: true,
     icon: <Star size={24} />,
-    priceId: 'price_1THW4U1tAfcMYbld1UOuAo7R',
+    priceId: 'price_1THoKF1CEUKhflhBf4xteaXJ',
     isSubscription: true
   },
   {
@@ -58,7 +58,7 @@ const plans = [
     buttonText: "Assinar Pro",
     highlight: false,
     icon: <ShieldCheck size={24} />,
-    priceId: 'price_1THW4o1tAfcMYbldQLyLUbFl',
+    priceId: 'price_1THoKJ1CEUKhflhBsUzaGm6z',
     isSubscription: true
   }
 ];
@@ -67,19 +67,19 @@ const creditPacks = [
   {
     credits: 20,
     price: "R$ 14,90",
-    priceId: 'price_1THW5J1tAfcMYbldZW8gLrYB',
+    priceId: 'price_1THoKH1CEUKhflhBxJlp3COc',
     tag: "Pacote Básico"
   },
   {
     credits: 60,
     price: "R$ 29,90",
-    priceId: 'price_1THW5e1tAfcMYbldHRcZDVB8',
+    priceId: 'price_1THoKG1CEUKhflhBlVOWZR01',
     tag: "Mais Popular"
   },
   {
     credits: 150,
     price: "R$ 49,90",
-    priceId: 'price_1THW611tAfcMYbldU3gfadnR',
+    priceId: 'price_1THoKG1CEUKhflhBfwbXQVDo',
     tag: "Melhor Valor"
   }
 ];

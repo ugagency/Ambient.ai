@@ -10,16 +10,16 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Mapeamento de IDs do Stripe para planos e créditos
+// Mapeamento de IDs do Stripe para planos e créditos (PRODUÇÃO)
 const PRICE_TO_PLAN = {
-  'price_1THW4U1tAfcMYbld1UOuAo7R': 'essencial',
-  'price_1THW4o1tAfcMYbldQLyLUbFl': 'pro'
+  'price_1THoKF1CEUKhflhBf4xteaXJ': 'essencial',
+  'price_1THoKJ1CEUKhflhBsUzaGm6z': 'pro'
 };
 
 const PRICE_TO_CREDITS = {
-  'price_1THW5J1tAfcMYbldZW8gLrYB': 20,
-  'price_1THW5e1tAfcMYbldHRcZDVB8': 60,
-  'price_1THW611tAfcMYbldU3gfadnR': 150
+  'price_1THoKH1CEUKhflhBxJlp3COc': 20,
+  'price_1THoKG1CEUKhflhBlVOWZR01': 60,
+  'price_1THoKG1CEUKhflhBfwbXQVDo': 150
 };
 
 export async function POST(request) {
