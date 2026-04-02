@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { History, X, ChevronRight, Image as ImageIcon } from "lucide-react";
 import "./HistorySidebar.css";
 
-export default function HistorySidebar({ isOpen, onClose, onSelect, refreshTrigger }) {
+export default function HistorySidebar({ isOpen, onClose, onSelect = () => {}, refreshTrigger }) {
   const [generations, setGenerations] = useState([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();

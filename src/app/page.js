@@ -202,6 +202,12 @@ export default function Home() {
       <HistorySidebar 
         isOpen={historyOpen} 
         onClose={() => setHistoryOpen(false)} 
+        onSelect={(gen) => {
+          setOriginalImageUrl(gen.original_image_url);
+          setResultImageUrl(gen.generated_image_url);
+          setStatus("success");
+          setHistoryOpen(false);
+        }}
         refreshTrigger={refreshHistory}
       />
 
