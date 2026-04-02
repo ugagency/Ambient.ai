@@ -1,131 +1,183 @@
 /* pricing.css */
-.pricing-nav {
-  width: 100%;
-  padding: 1rem 0;
+.pricing-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem 5rem;
+  min-height: 100vh;
 }
 
-.back-link {
+.pricing-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  padding: 2rem 0;
+}
+
+.pricing-logo {
+  height: 45px;
+  width: auto;
+  margin-bottom: 1.5rem;
+}
+
+.pricing-header .subtitle {
   color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: color 0.2s ease;
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0.5rem auto 0;
+}
+
+/* Navbar unificada para Pricing */
+.glass-navbar {
+  width: fit-content;
+  margin: 0 auto 3rem;
+  padding: 0.5rem 1.5rem;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 100px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 1rem;
+  z-index: 100;
+}
+
+.navbar-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.back-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
 }
 
 .back-link:hover {
   color: var(--accent-color);
 }
 
-.pricing-header {
-  text-align: center;
-  margin-bottom: 4rem;
+.divider { width: 1px; height: 16px; background: rgba(0,0,0,0.1); margin: 0 0.5rem; }
+
+.credits-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.4rem 0.8rem;
+  background: rgba(0,0,0,0.03);
+  border-radius: 50px;
 }
 
-.pricing-logo {
-  height: 40px;
-  width: auto;
-  margin-bottom: 1.5rem;
+.plan-badge {
+  background: var(--accent-color);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 800;
 }
 
-.pricing-header .title {
-  font-size: 2.5rem;
-  margin-top: 1rem;
-  color: var(--text-primary);
+.credits-text {
   font-weight: 700;
-  letter-spacing: -1px;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
-.pricing-header .subtitle {
+.nav-btn {
+  background: none;
+  border: none;
   color: var(--text-secondary);
-  font-size: 1.1rem;
-  margin-top: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
 }
 
+.logout-btn:hover { color: var(--danger-color); }
+
+/* GRID DE PLANOS */
 .plans-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto 5rem;
+  margin-bottom: 6rem;
 }
 
 .plan-card {
-  background: var(--bg-panel);
+  background: white;
   border: 1px solid var(--border-color);
-  border-radius: 28px;
-  padding: 2.5rem;
+  border-radius: 32px;
+  padding: 3rem 2rem;
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s ease;
 }
 
 .plan-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  transform: translateY(-5px);
 }
 
 .plan-card.highlight {
   border: 2px solid var(--accent-color);
-  box-shadow: 0 20px 40px rgba(16, 101, 88, 0.12);
+  box-shadow: 0 20px 40px rgba(16, 101, 88, 0.08);
 }
 
 .popular-badge {
   position: absolute;
-  top: -14px;
+  top: -15px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--accent-color);
   color: white;
   padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 0.7rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  white-space: nowrap;
 }
 
 .plan-icon {
-  margin-bottom: 1.5rem;
+  width: 48px;
+  height: 48px;
+  background: rgba(16, 101, 88, 0.05);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--accent-color);
+  margin-bottom: 1.5rem;
 }
 
 .plan-name {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 0.5rem;
 }
 
 .plan-price {
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: baseline;
+  margin-bottom: 1rem;
 }
 
 .plan-price .amount {
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -1px;
-}
-
-.plan-price .period {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  margin-left: 4px;
 }
 
 .plan-description {
   color: var(--text-secondary);
-  font-size: 0.95rem;
   margin-bottom: 2rem;
-  min-height: 2.8rem;
-  line-height: 1.5;
+  font-size: 0.9rem;
 }
 
 .features-list {
@@ -138,26 +190,23 @@
 .features-list li {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-  font-size: 0.95rem;
-  color: var(--text-primary);
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
 }
 
 .check-icon {
-  color: var(--success-color);
-  flex-shrink: 0;
+  color: var(--accent-color);
 }
 
 .btn-plan {
   width: 100%;
-  padding: 16px;
+  padding: 1rem;
   border-radius: 14px;
-  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
   border: none;
+  transition: all 0.2s;
 }
 
 .btn-accent {
@@ -165,139 +214,94 @@
   color: white;
 }
 
-.btn-accent:hover {
-  background: var(--accent-color-hover);
-  box-shadow: 0 4px 12px rgba(16, 101, 88, 0.2);
-}
-
 .btn-outline {
-  background: transparent;
-  border: 2px solid var(--border-color);
+  background: #f8faf9;
   color: var(--text-primary);
-}
-
-.btn-outline:hover {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-
-/* Extra Credits Section */
-.extra-credits {
-  width: 100%;
-  background: var(--bg-panel);
-  border-radius: 32px;
-  padding: 4rem 2rem;
   border: 1px solid var(--border-color);
+}
+
+/* CREDIT PACKS SECTION */
+.extra-credits {
+  background: #f8faf9;
+  border-radius: 40px;
+  padding: 4rem 2rem;
   text-align: center;
 }
 
-.credits-header {
-  margin-bottom: 3.5rem;
-}
-
 .credits-header h2 {
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 800;
   margin-bottom: 0.5rem;
 }
 
+.credits-header p {
+  color: var(--text-secondary);
+  margin-bottom: 3rem;
+}
+
 .credits-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   max-width: 1000px;
   margin: 0 auto;
 }
 
 .credit-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
+  background: white;
   padding: 2rem;
-  background: var(--bg-color);
-  border-radius: 20px;
+  border-radius: 24px;
   border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-}
-
-.credit-item:hover {
-  border-color: var(--accent-color);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-}
-
-.credit-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
 }
 
 .credit-count {
-  font-weight: 800;
+  display: block;
   font-size: 1.4rem;
-  color: var(--text-primary);
+  font-weight: 800;
+  margin-bottom: 0.3rem;
 }
 
 .credit-tag {
+  display: block;
   font-size: 0.7rem;
+  font-weight: 800;
   color: var(--accent-color);
-  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  margin-bottom: 1.5rem;
 }
 
-.credit-price-row {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
-}
-
-.price {
-  font-weight: 800;
+.credit-price-row .price {
   font-size: 1.5rem;
-  color: var(--text-primary);
+  font-weight: 800;
+  display: block;
+  margin-bottom: 1rem;
 }
 
 .buy-btn {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 12px;
   background: var(--text-primary);
   color: white;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 10px;
   font-weight: 700;
+  border: none;
   cursor: pointer;
-  transition: all 0.2s;
-  width: 100%;
-}
-
-.buy-btn:hover {
-  opacity: 0.9;
-  transform: scale(1.02);
+  transition: opacity 0.2s;
 }
 
 .pricing-footer {
-  margin-top: 4rem;
+  padding-top: 4rem;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  opacity: 0.7;
+  font-size: 0.85rem;
+  opacity: 0.6;
 }
 
-@media (max-width: 768px) {
-  .pricing-header .title {
-    font-size: 1.8rem;
-  }
-  .plans-grid {
+@media (max-width: 900px) {
+  .plans-grid, .credits-grid {
     grid-template-columns: 1fr;
   }
-  .credits-grid {
-    grid-template-columns: 1fr;
-  }
-  .extra-credits {
-    padding: 2.5rem 1.5rem;
+  .pricing-container {
+    padding: 0 1rem 3rem;
   }
 }

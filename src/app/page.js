@@ -1,83 +1,75 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import UploadArea from "../components/UploadArea";
-import FormPanel from "../components/FormPanel";
-import Button from "../components/Button";
-import Loader from "../components/Loader";
-import ImageResult from "../components/ImageResult";
-import HistorySidebar from "../components/HistorySidebar";
-import { Zap, LogOut, User, History, Sun, Moon } from "lucide-react";
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { 
+  Upload, 
+  RefreshCw, 
+  Download, 
+  History, 
+  LogOut, 
+  Zap, 
+  Moon, 
+  Sun, 
+  User, 
+  ChevronRight,
+  Check,
+  Star
+} from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import UploadArea from '@/components/UploadArea';
+import FormPanel from '@/components/FormPanel';
+import HistorySidebar from '@/components/HistorySidebar';
+import Button from '@/components/Button';
 
 export default function Home() {
-  const [status, setStatus] = useState("idle"); // idle, loading, success, error
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [originalImageUrl, setOriginalImageUrl] = useState(null);
-  const [currentBlob, setCurrentBlob] = useState(null); 
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [refreshHistory, setRefreshHistory] = useState(0);
+  const [status, setStatus] = useState("idle"); // idle, uploading, generating, success, error
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState(null);
   const [formValues, setFormValues] = useState({
     ambiente: "Sala de Estar",
-    customAmbiente: "",
     estilo: "Moderno",
-    orcamento: "Médio",
     intensidade: "Média",
     preferencias: ""
   });
-  const [theme, setTheme] = useState("light");
 
   const [resultImageUrl, setResultImageUrl] = useState(null);
   const resultRef = useRef(null);
   const supabase = createClient();
   const router = useRouter();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [refreshHistory, setRefreshHistory] = useState(0);
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
-        router.push("/login");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setUser(session.user);
+        fetchProfile(session.user.id);
       } else {
+        router.push("/login");
+      }
+    });
+
+    const checkUser = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
         setUser(authUser);
         fetchProfile(authUser.id);
       }
     };
-    getUser();
+    checkUser();
 
-    const fetchProfile = async (userId) => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (!error && data) {
-        setUserProfile(data);
-      }
-    };
-
-    // Dark mode logic
-    const savedTheme = localStorage.getItem("theme") || "light";
-    setTheme(savedTheme);
-    document.documentElement.setAttribute("data-theme", savedTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-  };
-
-  useEffect(() => {
-    if (status === "success" && resultRef.current) {
-      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    async function fetchProfile(userId) {
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      if (data) setUserProfile(data);
     }
-  }, [status]);
+
+    document.documentElement.setAttribute("data-theme", "light");
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -88,85 +80,26 @@ export default function Home() {
     setFormValues(prev => ({ ...prev, [name]: value }));
   };
 
-  const saveGenerationToSupabase = async (blob, finalAmbiente, prefs) => {
-    if (!user) return;
-
-    try {
-      const fileName = `${user.id}/${Date.now()}.png`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('generations')
-        .upload(fileName, blob);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('generations')
-        .getPublicUrl(fileName);
-
-      const { error: dbError } = await supabase
-        .from('generations')
-        .insert({
-          user_id: user.id,
-          generated_image_url: publicUrl,
-          settings: {
-            ambiente: finalAmbiente,
-            estilo: formValues.estilo,
-            orcamento: formValues.orcamento,
-            intensidade: formValues.intensidade,
-            preferencias: prefs
-          }
-        });
-
-      if (dbError) throw dbError;
-      setRefreshHistory(prev => prev + 1);
-    } catch (err) {
-      console.error("Erro ao salvar histórico:", err);
-    }
+  const handleReset = () => {
+    setStatus("idle");
+    setSelectedFile(null);
+    setOriginalImageUrl(null);
+    setResultImageUrl(null);
   };
 
   const handleStartProject = async () => {
-    if (!selectedFile) {
-      alert("Selecione uma imagem.");
-      return;
-    }
+    if (!selectedFile) return;
 
-    setStatus("loading");
-    setResultImageUrl(null);
-    setCurrentBlob(null);
-
-    const finalAmbiente = formValues.ambiente === "Outro" ? formValues.customAmbiente : formValues.ambiente;
-
-    const formData = new FormData();
-    formData.append("image", selectedFile);
-    formData.append("ambiente", finalAmbiente);
-    formData.append("estilo", formValues.estilo);
-    formData.append("orcamento", formValues.orcamento);
-    formData.append("intensidade", formValues.intensidade);
-    formData.append("preferencias", formValues.preferencias);
-
-    await performRequest(formData, finalAmbiente, formValues.preferencias);
-  };
-
-  const handleRefineChat = async (message) => {
-    if (!currentBlob || !message) return;
-
-    setStatus("loading");
-    const finalAmbiente = formValues.ambiente === "Outro" ? formValues.customAmbiente : formValues.ambiente;
+    setStatus("generating");
     
-    const formData = new FormData();
-    formData.append("image", currentBlob, "current-design.png");
-    formData.append("ambiente", finalAmbiente);
-    formData.append("estilo", formValues.estilo);
-    formData.append("orcamento", formValues.orcamento);
-    formData.append("intensidade", formValues.intensidade);
-    formData.append("preferencias", message);
-
-    await performRequest(formData, finalAmbiente, message);
-  };
-
-  const performRequest = async (formData, finalAmbiente, currentPrefs) => {
     try {
+      const formData = new FormData();
+      formData.append("image", selectedFile);
+      formData.append("ambiente", formValues.ambiente);
+      formData.append("estilo", formValues.estilo);
+      formData.append("intensidade", formValues.intensidade);
+      formData.append("preferencias", formValues.preferencias);
+
       const { data: { session } } = await supabase.auth.getSession();
       
       const response = await fetch("/api/generate", {
@@ -177,129 +110,89 @@ export default function Home() {
         body: formData,
       });
 
-      if (response.status === 402) {
-        setStatus("idle");
-        if (confirm("Você atingiu seu limite de créditos diários ou não possui saldo. Deseja adquirir mais créditos ou assinar um plano?")) {
-          router.push("/pricing");
-        }
-        return;
-      }
-
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Erro na geração.");
+        throw new Error(errorData.error || "Erro na geração");
       }
 
-      const blob = await response.blob();
-      const imageUrl = URL.createObjectURL(blob);
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("image")) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setResultImageUrl(url);
+      } else {
+        const data = await response.json();
+        setResultImageUrl(data.image_url);
+      }
       
-      setCurrentBlob(blob);
-      setResultImageUrl(imageUrl);
       setStatus("success");
+      setRefreshHistory(prev => prev + 1);
+      
+      // Update profile locally to show new credit count
+      fetchProfile(user.id);
 
-      // Atualiza o perfil para refletir o crédito usado
-      const { data: updatedProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      setUserProfile(updatedProfile);
-
-      saveGenerationToSupabase(blob, finalAmbiente, currentPrefs);
     } catch (error) {
-      console.error(error);
-      alert("Erro ao gerar. Tente novamente.");
+      console.error("Error:", error);
       setStatus("error");
+      alert(error.message);
     }
   };
 
-  const handleHistorySelect = async (gen) => {
-    setResultImageUrl(gen.generated_image_url);
-    
-    // Tenta fetch do blob para permitir chat de refinamento
-    try {
-      const resp = await fetch(gen.generated_image_url);
-      const blob = await resp.blob();
-      setCurrentBlob(blob);
-    } catch (err) {
-      console.error("Não foi possível carregar o blob original para refinamento.");
-    }
-
-    // Nota: No histórico, não temos a imagem "Original" salva separadamente (o n8n gera a nova).
-    // Para simplificar, desativaremos o slider no histórico ou mostraremos a mesma imagem.
-    setOriginalImageUrl(gen.generated_image_url);
-
-    setFormValues({
-      ambiente: gen.settings.ambiente || "Outro",
-      customAmbiente: gen.settings.ambiente || "",
-      estilo: gen.settings.estilo || "Moderno",
-      orcamento: gen.settings.orcamento || "Médio",
-      intensidade: gen.settings.intensidade || "Média",
-      preferencias: gen.settings.preferencias || ""
-    });
-
-    setStatus("success");
-    setHistoryOpen(false);
-  };
-
-  const handleReset = () => {
-    setStatus("idle");
-    setResultImageUrl(null);
-    setCurrentBlob(null);
-    setSelectedFile(null);
-    setOriginalImageUrl(null);
-  };
+  async function fetchProfile(userId) {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (data) setUserProfile(data);
+  }
 
   return (
     <main className="app-container">
       <HistorySidebar 
         isOpen={historyOpen} 
-        onClose={() => setHistoryOpen(!historyOpen)} 
-        onSelect={handleHistorySelect}
+        onClose={() => setHistoryOpen(false)} 
         refreshTrigger={refreshHistory}
       />
 
-      <header className="main-navbar fade-in">
-        <div className="navbar-content">
-          <div className="logo-section" onClick={handleReset} style={{ cursor: 'pointer' }}>
-            <img src="/logo.png" alt="Reformei" className="app-logo" />
-            <h1 className="logo-text">Reformei</h1>
-          </div>
-
-          {user && (
-            <div className="nav-actions">
-              {userProfile && (
-                <div className="credits-display">
-                  <span className="plan-badge">{userProfile.plan_type.toUpperCase()}</span>
-                  <span className="credits-text">
-                    {userProfile.plan_type === 'pro' ? (
-                      "∞ Créditos"
-                    ) : (
-                      <>
-                        {Math.max(0, (userProfile.plan_type === 'essencial' ? 15 : 5) - userProfile.daily_credits_used)} Diários 
-                        {userProfile.extra_credits_balance > 0 && ` + ${userProfile.extra_credits_balance} Extras`}
-                      </>
-                    )}
-                  </span>
-                </div>
-              )}
-              <div className="divider"></div>
-              <Link href="/pricing" className="nav-link">Planos</Link>
-              <div className="divider"></div>
-              <button onClick={() => setHistoryOpen(true)} className="nav-btn history-btn">
-                <History size={18} />
-                <span className="hide-mobile">Histórico</span>
-              </button>
-              <button onClick={toggleTheme} className="nav-btn theme-btn">
-                {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-              </button>
-              <button onClick={handleLogout} className="nav-btn logout-btn">
-                <LogOut size={18} />
-              </button>
-            </div>
-          )}
+      <header className="page-header fade-in">
+        <div className="logo-container" onClick={handleReset} style={{ cursor: 'pointer' }}>
+          <img src="/logo.png" alt="Logo" className="app-logo-large" />
         </div>
       </header>
+
+      <nav className="glass-navbar fade-in">
+        <div className="navbar-content">
+          <div className="nav-actions">
+            {userProfile ? (
+              <div className="credits-display">
+                <span className="plan-badge">{userProfile.plan_type.toUpperCase()}</span>
+                <span className="credits-text">
+                  {userProfile.plan_type === 'pro' ? (
+                    "∞ Créditos"
+                  ) : (
+                    <>
+                      {Math.max(0, (userProfile.plan_type === 'essencial' ? 15 : 5) - userProfile.daily_credits_used)} Diários 
+                      {userProfile.extra_credits_balance > 0 && ` + ${userProfile.extra_credits_balance} Extras`}
+                    </>
+                  )}
+                </span>
+              </div>
+            ) : (
+              <div className="credits-display loading">Carregando...</div>
+            )}
+            
+            <div className="divider"></div>
+            <Link href="/pricing" className="nav-link">Planos</Link>
+            <div className="divider"></div>
+            
+            <button onClick={() => setHistoryOpen(true)} className="nav-btn">
+              <History size={18} />
+              <span className="hide-mobile">Histórico</span>
+            </button>
+            <button onClick={handleLogout} className="nav-btn logout-btn">
+              <LogOut size={18} />
+              <span className="hide-mobile">Sair</span>
+            </button>
+          </div>
+        </div>
+      </nav>
 
       <section className="hero-section fade-in">
         <p className="app-subtitle">Recrie seu espaço com Inteligência Artificial</p>
@@ -316,95 +209,104 @@ export default function Home() {
               <Zap size={20} /> Começar Projeto
             </Button>
           </>
-        ) : null}
-
-        {status === "loading" && <Loader text="Processando seu design..." />}
-
-        {status === "success" && resultImageUrl && (
-          <div ref={resultRef} className="width-full pt-8">
-            <ImageResult 
-              imageUrl={resultImageUrl} 
-              beforeImage={originalImageUrl} 
-              onChatSubmit={handleRefineChat} 
-              onReset={handleReset} 
-            />
+        ) : status === "generating" ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <h3>Transformando seu ambiente...</h3>
+            <p>Isso pode levar até 30 segundos.</p>
+          </div>
+        ) : (
+          <div className="result-container" ref={resultRef}>
+            <div className="comparison-grid">
+              <div className="image-card">
+                <h4>Original</h4>
+                <img src={originalImageUrl} alt="Original" />
+              </div>
+              <div className="image-card premium-border">
+                <h4>Novo Design</h4>
+                <img src={resultImageUrl} alt="Gerado" />
+                <a href={resultImageUrl} download="reforma.png" className="download-btn">
+                  <Download size={18} /> Baixar Imagem
+                </a>
+              </div>
+            </div>
+            <Button onClick={handleReset} variant="secondary" className="mt-8">
+              <RefreshCw size={18} /> Novo Projeto
+            </Button>
           </div>
         )}
       </section>
 
       <style jsx>{`
-        .main-navbar {
+        .page-header {
           width: 100%;
-          padding: 1rem 0;
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-          position: sticky;
-          top: 0;
-          z-index: 100;
-        }
-        .navbar-content {
-          max-width: 1200px;
-          margin: 0 auto;
           display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0 1.5rem;
+          justify-content: center;
+          padding: 2.5rem 0 1rem;
         }
-        .logo-section {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-        .app-logo {
-          height: 32px;
+        .app-logo-large {
+          height: 55px;
           width: auto;
         }
-        .logo-text {
-          font-size: 1.4rem;
-          font-weight: 700;
-          color: var(--primary-color);
-          margin: 0;
-          letter-spacing: -0.5px;
+        .glass-navbar {
+          width: fit-content;
+          margin: 0 auto 2.5rem;
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(15px);
+          -webkit-backdrop-filter: blur(15px);
+          border: 1px solid rgba(255, 255, 255, 0.6);
+          border-radius: 100px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+          position: sticky;
+          top: 1.5rem;
+          z-index: 100;
+          padding: 0.4rem 1.2rem;
+        }
+        .navbar-content {
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .nav-actions {
           display: flex;
           align-items: center;
-          gap: 0.25rem;
+          gap: 0.4rem;
         }
         .credits-display {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 0.4rem 0.8rem;
-          background: rgba(0,0,0,0.03);
+          gap: 10px;
+          padding: 0.5rem 1rem;
+          background: rgba(16, 101, 88, 0.05);
           border-radius: 50px;
         }
+        .credits-display.loading { font-size: 0.7rem; opacity: 0.5; }
         .plan-badge {
           background: var(--accent-color);
           color: white;
-          padding: 1px 6px;
-          border-radius: 4px;
-          font-size: 0.6rem;
+          padding: 2px 8px;
+          border-radius: 6px;
+          font-size: 0.65rem;
           font-weight: 800;
+          letter-spacing: 0.5px;
         }
         .credits-text {
-          font-weight: 600;
+          font-weight: 700;
           color: var(--text-primary);
-          font-size: 0.8rem;
+          font-size: 0.85rem;
           white-space: nowrap;
         }
-        .divider { width: 1px; height: 16px; background: rgba(0,0,0,0.1); margin: 0 0.5rem; }
+        .divider { width: 1px; height: 20px; background: rgba(0,0,0,0.08); margin: 0 0.4rem; }
         .nav-link {
           color: var(--text-primary);
           text-decoration: none;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 0.85rem;
-          padding: 0.5rem 0.75rem;
-          transition: color 0.2s;
+          padding: 0.5rem 1rem;
+          border-radius: 50px;
+          transition: all 0.2s;
         }
-        .nav-link:hover { color: var(--accent-color); }
+        .nav-link:hover { background: rgba(0,0,0,0.03); color: var(--accent-color); }
         .nav-btn { 
           background: none; 
           border: none; 
@@ -412,33 +314,105 @@ export default function Home() {
           cursor: pointer; 
           display: flex; 
           align-items: center; 
-          padding: 0.5rem;
-          border-radius: 50%;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          border-radius: 50px;
           transition: all 0.2s ease;
+          font-weight: 600;
+          font-size: 0.85rem;
         }
-        .nav-btn:hover { background: rgba(0, 0, 0, 0.05); color: var(--text-primary); }
-        .logout-btn:hover { color: var(--danger-color); }
+        .nav-btn:hover { background: rgba(0, 0, 0, 0.03); color: var(--text-primary); }
+        .logout-btn:hover { color: var(--danger-color); background: rgba(220, 38, 38, 0.05); }
         
-        .hero-section {
-          padding-top: 3rem;
-          text-align: center;
-        }
+        .hero-section { text-align: center; margin-bottom: 3rem; }
         .app-subtitle {
           color: var(--text-secondary);
           font-size: 1.1rem;
-          font-weight: 300;
-          max-width: 600px;
-          margin: 0 auto 2rem;
+          font-weight: 400;
+          opacity: 0.8;
         }
 
         @media (max-width: 768px) {
-          .logo-text, .hide-mobile, .divider { display: none; }
-          .navbar-content { padding: 0 1rem; }
+          .hide-mobile, .divider { display: none; }
+          .glass-navbar { width: 95%; padding: 0.3rem 0.8rem; }
+          .app-logo-large { height: 45px; }
         }
-        .width-full { width: 100%; }
-        .pt-8 { padding-top: 2rem; }
+
+        .app-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 1rem 5rem;
+          min-height: 100vh;
+        }
+        .main-content {
+          max-width: 800px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2rem;
+        }
+        .loading-container {
+          text-align: center;
+          padding: 4rem 2rem;
+          background: var(--bg-panel);
+          border-radius: 24px;
+          width: 100%;
+          border: 1px solid var(--border-color);
+        }
+        .loading-spinner {
+          width: 50px;
+          height: 50px;
+          border: 4px solid rgba(16, 101, 88, 0.1);
+          border-top: 4px solid var(--accent-color);
+          border-radius: 50%;
+          margin: 0 auto 1.5rem;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .result-container { width: 100%; }
+        .comparison-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+          width: 100%;
+        }
+        @media (max-width: 600px) { .comparison-grid { grid-template-columns: 1fr; } }
+        .image-card {
+          background: var(--bg-panel);
+          padding: 1rem;
+          border-radius: 20px;
+          border: 1px solid var(--border-color);
+          text-align: center;
+        }
+        .image-card h4 { margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        .image-card img { width: 100%; border-radius: 12px; display: block; }
+        .premium-border { border: 2px solid var(--accent-color); box-shadow: 0 10px 30px rgba(16, 101, 88, 0.1); }
+        .download-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-top: 1rem;
+          padding: 12px;
+          background: var(--primary-color);
+          color: white;
+          text-decoration: none;
+          border-radius: 10px;
+          font-weight: 600;
+          transition: opacity 0.2s;
+        }
+        .download-btn:hover { opacity: 0.9; }
+        .error-message {
+          background: #fee2e2;
+          color: #b91c1c;
+          padding: 1rem;
+          border-radius: 12px;
+          width: 100%;
+          text-align: center;
+          font-weight: 500;
+        }
       `}</style>
     </main>
   );
 }
-
