@@ -21,6 +21,7 @@ import { createClient } from '@/lib/supabase/client';
 import UploadArea from '@/components/UploadArea';
 import FormPanel from '@/components/FormPanel';
 import HistorySidebar from '@/components/HistorySidebar';
+import ImageResult from '@/components/ImageResult';
 import Button from '@/components/Button';
 
 export default function Home() {
@@ -85,6 +86,59 @@ export default function Home() {
     setSelectedFile(null);
     setOriginalImageUrl(null);
     setResultImageUrl(null);
+  };
+
+  const handleChatSubmit = async (message) => {
+    if (!message.trim()) return;
+    setStatus("generating");
+    try {
+      const formData = new FormData();
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      } else if (resultImageUrl) {
+        // Send the current result image URL for iterative refinement
+        const response = await fetch(resultImageUrl);
+        const blob = await response.blob();
+        formData.append("image", blob, "current-design.png");
+      }
+      formData.append("ambiente", formValues.ambiente);
+      formData.append("estilo", formValues.estilo);
+      formData.append("intensidade", formValues.intensidade);
+      formData.append("preferencias", message);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const resp = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: formData,
+      });
+
+      if (!resp.ok) {
+        const errorData = await resp.json();
+        throw new Error(errorData.error || "Erro na geração");
+      }
+
+      const contentType = resp.headers.get("content-type");
+      if (contentType && contentType.includes("image")) {
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        setResultImageUrl(url);
+      } else {
+        const data = await resp.json();
+        setResultImageUrl(data.image_url);
+      }
+      
+      setStatus("success");
+      setRefreshHistory(prev => prev + 1);
+      fetchProfile(user.id);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setStatus("success"); // Keep showing result even on chat error
+      alert(error.message);
+    }
   };
 
   const handleStartProject = async () => {
@@ -216,24 +270,12 @@ export default function Home() {
             <p>Isso pode levar até 30 segundos.</p>
           </div>
         ) : (
-          <div className="result-container" ref={resultRef}>
-            <div className="comparison-grid">
-              <div className="image-card">
-                <h4>Original</h4>
-                <img src={originalImageUrl} alt="Original" />
-              </div>
-              <div className="image-card premium-border">
-                <h4>Novo Design</h4>
-                <img src={resultImageUrl} alt="Gerado" />
-                <a href={resultImageUrl} download="reforma.png" className="download-btn">
-                  <Download size={18} /> Baixar Imagem
-                </a>
-              </div>
-            </div>
-            <Button onClick={handleReset} variant="secondary" className="mt-8">
-              <RefreshCw size={18} /> Novo Projeto
-            </Button>
-          </div>
+          <ImageResult 
+            imageUrl={resultImageUrl} 
+            beforeImage={originalImageUrl}
+            onChatSubmit={handleChatSubmit}
+            onReset={handleReset}
+          />
         )}
       </section>
 
@@ -345,12 +387,13 @@ export default function Home() {
           min-height: 100vh;
         }
         .main-content {
-          max-width: 800px;
+          max-width: 700px;
           margin: 0 auto;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 2rem;
+          width: 100%;
         }
         .loading-container {
           text-align: center;
@@ -370,39 +413,6 @@ export default function Home() {
           animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .result-container { width: 100%; }
-        .comparison-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.5rem;
-          width: 100%;
-        }
-        @media (max-width: 600px) { .comparison-grid { grid-template-columns: 1fr; } }
-        .image-card {
-          background: var(--bg-panel);
-          padding: 1rem;
-          border-radius: 20px;
-          border: 1px solid var(--border-color);
-          text-align: center;
-        }
-        .image-card h4 { margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
-        .image-card img { width: 100%; border-radius: 12px; display: block; }
-        .premium-border { border: 2px solid var(--accent-color); box-shadow: 0 10px 30px rgba(16, 101, 88, 0.1); }
-        .download-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          margin-top: 1rem;
-          padding: 12px;
-          background: var(--primary-color);
-          color: white;
-          text-decoration: none;
-          border-radius: 10px;
-          font-weight: 600;
-          transition: opacity 0.2s;
-        }
-        .download-btn:hover { opacity: 0.9; }
         .error-message {
           background: #fee2e2;
           color: #b91c1c;

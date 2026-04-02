@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import './ImageResult.css';
 import Button from './Button';
 import { Send, Download, RefreshCw } from 'lucide-react';
-import BeforeAfterSlider from './BeforeAfterSlider';
 
 export default function ImageResult({ imageUrl, beforeImage, onChatSubmit, onReset }) {
   const [chatMessage, setChatMessage] = useState("");
@@ -31,11 +30,15 @@ export default function ImageResult({ imageUrl, beforeImage, onChatSubmit, onRes
         <p className="result-subtitle">O que você gostaria de mudar neste ambiente?</p>
       </div>
       
-      <div className="image-wrapper">
-        <BeforeAfterSlider 
-          beforeImage={beforeImage || imageUrl} 
-          afterImage={imageUrl} 
-        />
+      <div className="comparison-grid">
+        <div className="comparison-card">
+          <span className="comparison-label">Antes</span>
+          <img src={beforeImage || imageUrl} alt="Original" className="comparison-image" />
+        </div>
+        <div className="comparison-card generated">
+          <span className="comparison-label label-after">Depois</span>
+          <img src={imageUrl} alt="Novo Design" className="comparison-image" />
+        </div>
       </div>
 
       <div className="chat-interface">
@@ -53,11 +56,11 @@ export default function ImageResult({ imageUrl, beforeImage, onChatSubmit, onRes
       </div>
 
       <div className="result-actions">
-        <Button onClick={handleDownload} className="download-btn" style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: 'auto' }}>
+        <Button onClick={handleDownload} style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: 'auto' }}>
           <Download size={18} />
           Salvar
         </Button>
-        <Button onClick={onReset} className="reset-btn" style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: 'auto' }}>
+        <Button onClick={onReset} style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: 'auto' }}>
           <RefreshCw size={18} />
           Novo Projeto
         </Button>
