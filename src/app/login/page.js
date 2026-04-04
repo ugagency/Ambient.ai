@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const [message, setMessage] = useState(null);
   const router = useRouter();
   const supabase = createClient();
@@ -21,20 +22,34 @@ export default function LoginPage() {
     setLoading(true);
     setMessage(null);
 
-    const { data, error } = isSignUp 
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setMessage({ type: "error", text: error.message });
+    let result;
+    
+    if (isResetPassword) {
+      result = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      });
+      if (!result.error) {
+        setMessage({ type: "success", text: "E-mail de redefinição enviado! Verifique sua caixa de entrada." });
+      }
     } else {
-      if (isSignUp) {
-        setMessage({ type: "success", text: "Verifique seu e-mail para confirmar o cadastro!" });
-      } else {
-        router.push("/");
-        router.refresh();
+      result = isSignUp 
+        ? await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signInWithPassword({ email, password });
+      
+      if (!result.error) {
+        if (isSignUp) {
+          setMessage({ type: "success", text: "Verifique seu e-mail para confirmar o cadastro!" });
+        } else {
+          router.push("/");
+          router.refresh();
+        }
       }
     }
+
+    if (result.error) {
+      setMessage({ type: "error", text: result.error.message });
+    }
+    
     setLoading(false);
   };
 
@@ -67,31 +82,39 @@ export default function LoginPage() {
 
         <div className="login-card slide-up">
           <div className="login-header">
-            <h2 className="login-title">{isSignUp ? "Criar Conta" : "Entrar"}</h2>
+            <h2 className="login-title">
+              {isResetPassword ? "Redefinir Senha" : (isSignUp ? "Criar Conta" : "Entrar")}
+            </h2>
             <p className="login-subtitle">
-              {isSignUp ? "Registre-se para salvar seu histórico" : "Faça login no seu painel de design"}
+              {isResetPassword 
+                ? "Enviaremos um link de recuperação para seu e-mail" 
+                : (isSignUp ? "Registre-se para salvar seu histórico" : "Faça login no seu painel de design")}
             </p>
           </div>
 
-          {/* Google OAuth Button */}
-          <button 
-            className="google-btn" 
-            onClick={handleGoogleLogin} 
-            disabled={googleLoading}
-            type="button"
-          >
-            <svg width="20" height="20" viewBox="0 0 48 48">
-              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-            </svg>
-            {googleLoading ? "Redirecionando..." : "Continuar com Google"}
-          </button>
+          {!isResetPassword && (
+            <>
+              {/* Google OAuth Button */}
+              <button 
+                className="google-btn" 
+                onClick={handleGoogleLogin} 
+                disabled={googleLoading}
+                type="button"
+              >
+                <svg width="20" height="20" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                {googleLoading ? "Redirecionando..." : "Continuar com Google"}
+              </button>
 
-          <div className="divider-line">
-            <span>ou</span>
-          </div>
+              <div className="divider-line">
+                <span>ou</span>
+              </div>
+            </>
+          )}
 
           <form className="login-form" onSubmit={handleAuth}>
             <div className="form-group">
@@ -105,17 +128,28 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <div className="form-group">
-              <label className="form-label">Senha</label>
-              <input
-                type="password"
-                className="form-input"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            
+            {!isResetPassword && (
+              <div className="form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="form-label">Senha</label>
+                  <span 
+                    className="login-link-sm" 
+                    onClick={() => setIsResetPassword(true)}
+                  >
+                    Esqueceu sua senha?
+                  </span>
+                </div>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required={!isResetPassword}
+                />
+              </div>
+            )}
 
             {message && (
               <div className={`message message-${message.type}`}>
@@ -124,14 +158,27 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" disabled={loading}>
-              {loading ? "Processando..." : (isSignUp ? "Cadastrar" : "Entrar")}
+              {loading ? "Processando..." : (isResetPassword ? "Enviar Link de Recuperação" : (isSignUp ? "Cadastrar" : "Entrar"))}
             </Button>
+            
+            {isResetPassword && (
+              <button 
+                type="button" 
+                className="back-btn" 
+                onClick={() => setIsResetPassword(false)}
+              >
+                Voltar para Login
+              </button>
+            )}
           </form>
 
           <footer className="login-footer">
             <p>
               {isSignUp ? "Já tem uma conta?" : "Não tem uma conta?"}{" "}
-              <span className="login-link" onClick={() => setIsSignUp(!isSignUp)}>
+              <span className="login-link" onClick={() => {
+                setIsSignUp(!isSignUp);
+                setIsResetPassword(false);
+              }}>
                 {isSignUp ? "Faça login" : "Cadastre-se"}
               </span>
             </p>

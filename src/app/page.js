@@ -32,7 +32,9 @@ export default function Home() {
   const [originalImageUrl, setOriginalImageUrl] = useState(null);
   const [formValues, setFormValues] = useState({
     ambiente: "Sala de Estar",
+    customAmbiente: "",
     estilo: "Moderno",
+    orcamento: "Médio",
     intensidade: "Média",
     preferencias: ""
   });
@@ -101,8 +103,9 @@ export default function Home() {
         const blob = await response.blob();
         formData.append("image", blob, "current-design.png");
       }
-      formData.append("ambiente", formValues.ambiente);
+      formData.append("ambiente", formValues.ambiente === "Outro" ? formValues.customAmbiente : formValues.ambiente);
       formData.append("estilo", formValues.estilo);
+      formData.append("orcamento", formValues.orcamento);
       formData.append("intensidade", formValues.intensidade);
       formData.append("preferencias", message);
 
@@ -149,8 +152,9 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append("image", selectedFile);
-      formData.append("ambiente", formValues.ambiente);
+      formData.append("ambiente", formValues.ambiente === "Outro" ? formValues.customAmbiente : formValues.ambiente);
       formData.append("estilo", formValues.estilo);
+      formData.append("orcamento", formValues.orcamento);
       formData.append("intensidade", formValues.intensidade);
       formData.append("preferencias", formValues.preferencias);
 
