@@ -268,7 +268,11 @@ export default function Home() {
         {status === "idle" || status === "error" ? (
           <>
             <UploadArea onFileSelect={setSelectedFile} onPreview={setOriginalImageUrl} />
-            <FormPanel values={formValues} onChange={handleFormChange} />
+            <FormPanel 
+              values={formValues} 
+              onChange={handleFormChange} 
+              planType={userProfile?.plan_type}
+            />
             <Button onClick={handleStartProject} disabled={!selectedFile}>
               <Zap size={20} /> Começar Projeto
             </Button>

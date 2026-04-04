@@ -1,11 +1,29 @@
 "use client";
 import './FormPanel.css';
 
-export default function FormPanel({ values, onChange }) {
+export default function FormPanel({ values, onChange, planType = 'free' }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     onChange(name, value);
   };
+
+  const getFilteredStyles = () => {
+    const allStyles = [
+      { id: "moderno",       label: "Moderno",           tier: "free" },
+      { id: "contemporaneo", label: "Contemporâneo",      tier: "free" },
+      { id: "aconchegante",  label: "Aconchegante",       tier: "free" },
+      { id: "rustico",       label: "Rústico",            tier: "free" },
+      { id: "minimalista",   label: "Minimalista",        tier: "free" },
+      { id: "classico",      label: "Clássico Elegante",  tier: "paid" },
+      { id: "boho",          label: "Boho",               tier: "paid" },
+      { id: "industrial",    label: "Industrial",         tier: "paid" },
+    ];
+
+    const isPaid = planType === 'essencial' || planType === 'pro';
+    return isPaid ? allStyles : allStyles.filter(s => s.tier === 'free');
+  };
+
+  const filteredStyles = getFilteredStyles();
 
   return (
     <div className="form-panel fade-in" style={{ animationDelay: "0.1s" }}>
@@ -59,11 +77,11 @@ export default function FormPanel({ values, onChange }) {
           value={values.estilo} 
           onChange={handleChange}
         >
-          <option value="Moderno">Moderno</option>
-          <option value="Minimalista">Minimalista</option>
-          <option value="Industrial">Industrial</option>
-          <option value="Clássico">Clássico</option>
-          <option value="Rústico">Rústico</option>
+          {filteredStyles.map((style) => (
+            <option key={style.id} value={style.label}>
+              {style.label}
+            </option>
+          ))}
         </select>
       </div>
 
