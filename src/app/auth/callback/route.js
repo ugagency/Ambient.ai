@@ -15,22 +15,22 @@ export async function GET(request) {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Verificar se o perfil já existe, senão criar
-        const { data: existingProfile } = await supabase
+        // Verificar se o perfil já existe usando Admin para evitar problemas de RLS
+        const { createClient: createAdminClient } = await import('@supabase/supabase-js');
+        const supabaseAdmin = createAdminClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.SUPABASE_SERVICE_ROLE_KEY
+        );
+
+        const { data: existingProfile } = await supabaseAdmin
           .from('profiles')
           .select('id')
           .eq('id', user.id)
           .single();
 
         if (!existingProfile) {
-          // Criar perfil automaticamente para novos usuários Google
-          const { createClient: createAdminClient } = await import('@supabase/supabase-js');
-          const supabaseAdmin = createAdminClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.SUPABASE_SERVICE_ROLE_KEY
-          );
-
-          await supabaseAdmin.from('profiles').insert({
+          // Criar perfil automaticamente para novos usuários
+          const { error: insertError } = await supabaseAdmin.from('profiles').insert({
             id: user.id,
             email: user.email,
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
@@ -40,7 +40,11 @@ export async function GET(request) {
             extra_credits_balance: 0,
           });
 
-          console.log(`✅ Perfil criado para novo usuário Google: ${user.email}`);
+          if (insertError) {
+            console.error(`❌ Erro ao criar perfil para ${user.email}:`, insertError.message);
+          } else {
+            console.log(`✅ Perfil criado com sucesso para: ${user.email}`);
+          }
         }
       }
 

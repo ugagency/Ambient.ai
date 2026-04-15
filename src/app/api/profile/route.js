@@ -41,6 +41,7 @@ export async function GET(request) {
     }
 
     // Buscar o perfil usando Admin para garantir bypass de RLS
+    console.log(`Buscando perfil para o ID: ${userId}`);
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
@@ -48,9 +49,11 @@ export async function GET(request) {
       .single();
 
     if (profileError || !profile) {
+      console.error(`Erro ao buscar perfil para ${userId}:`, profileError?.message || "Registro não encontrado");
       return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 404 });
     }
 
+    console.log(`Perfil encontrado com sucesso para ${userId}`);
     return NextResponse.json(profile);
   } catch (error) {
     console.error('Erro ao buscar perfil:', error);
