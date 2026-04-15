@@ -46,10 +46,15 @@ export async function GET(request) {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle(); // Usar maybeSingle para evitar erro se não houver registro
 
-    if (profileError || !profile) {
-      console.error(`Erro ao buscar perfil para ${userId}:`, profileError?.message || "Registro não encontrado");
+    if (profileError) {
+      console.error(`Erro de banco ao buscar perfil para ${userId}:`, profileError.message);
+      return NextResponse.json({ error: 'Erro no banco de dados' }, { status: 500 });
+    }
+
+    if (!profile) {
+      console.warn(`Aviso: Perfil não encontrado no banco para ${userId}`);
       return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 404 });
     }
 

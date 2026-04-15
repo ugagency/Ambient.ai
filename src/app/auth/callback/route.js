@@ -15,36 +15,25 @@ export async function GET(request) {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Verificar se o perfil já existe usando Admin para evitar problemas de RLS
+        // Criar ou atualizar perfil automaticamente (UPSERT)
         const { createClient: createAdminClient } = await import('@supabase/supabase-js');
         const supabaseAdmin = createAdminClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL,
           process.env.SUPABASE_SERVICE_ROLE_KEY
         );
 
-        const { data: existingProfile } = await supabaseAdmin
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .single();
+        const { error: upsertError } = await supabaseAdmin.from('profiles').upsert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+          avatar_url: user.user_metadata?.avatar_url || '',
+          plan_type: 'free',
+        }, { onConflict: 'id', ignoreDuplicates: false });
 
-        if (!existingProfile) {
-          // Criar perfil automaticamente para novos usuários
-          const { error: insertError } = await supabaseAdmin.from('profiles').insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-            avatar_url: user.user_metadata?.avatar_url || '',
-            plan_type: 'free',
-            daily_credits_used: 0,
-            extra_credits_balance: 0,
-          });
-
-          if (insertError) {
-            console.error(`❌ Erro ao criar perfil para ${user.email}:`, insertError.message);
-          } else {
-            console.log(`✅ Perfil criado com sucesso para: ${user.email}`);
-          }
+        if (upsertError) {
+          console.error(`❌ Erro no upsert do perfil para ${user.email}:`, upsertError.message);
+        } else {
+          console.log(`✅ Perfil garantido (upsert) para: ${user.email}`);
         }
       }
 
