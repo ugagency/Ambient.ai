@@ -97,7 +97,12 @@ export default function PricingPage() {
       if (authUser) {
         setUser(authUser);
         try {
-          const response = await fetch('/api/profile');
+          const { data: { session } } = await supabase.auth.getSession();
+          const response = await fetch('/api/profile', {
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`
+            }
+          });
           if (response.ok) {
             const profile = await response.json();
             setUserProfile(profile);

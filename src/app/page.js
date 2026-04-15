@@ -67,7 +67,12 @@ export default function Home() {
 
     async function fetchProfile() {
       try {
-        const response = await fetch('/api/profile');
+        const { data: { session } } = await supabase.auth.getSession();
+        const response = await fetch('/api/profile', {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`
+          }
+        });
         if (response.ok) {
           const data = await response.json();
           setUserProfile(data);
@@ -207,7 +212,12 @@ export default function Home() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/profile');
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/profile', {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setUserProfile(data);
