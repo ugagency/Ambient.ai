@@ -50,7 +50,7 @@ export default function Home() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         setUser(session.user);
-        fetchProfile(session.user.id);
+        fetchProfile();
       } else {
         router.push("/login");
       }
@@ -60,14 +60,23 @@ export default function Home() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
         setUser(authUser);
-        fetchProfile(authUser.id);
+        fetchProfile();
       }
     };
     checkUser();
 
-    async function fetchProfile(userId) {
-      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      if (data) setUserProfile(data);
+    async function fetchProfile() {
+      try {
+        const response = await fetch('/api/profile');
+        if (response.ok) {
+          const data = await response.json();
+          setUserProfile(data);
+        } else {
+          console.error("Erro ao carregar perfil:", response.statusText);
+        }
+      } catch (err) {
+        console.error("Erro na requisição do perfil:", err);
+      }
     }
 
     document.documentElement.setAttribute("data-theme", "light");
@@ -136,7 +145,7 @@ export default function Home() {
       
       setStatus("success");
       setRefreshHistory(prev => prev + 1);
-      fetchProfile(user.id);
+      fetchProfile();
     } catch (error) {
       console.error("Chat error:", error);
       setStatus("success"); // Keep showing result even on chat error
@@ -187,7 +196,7 @@ export default function Home() {
       setRefreshHistory(prev => prev + 1);
       
       // Update profile locally to show new credit count
-      fetchProfile(user.id);
+      fetchProfile();
 
     } catch (error) {
       console.error("Error:", error);
@@ -196,10 +205,17 @@ export default function Home() {
     }
   };
 
-  async function fetchProfile(userId) {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (data) setUserProfile(data);
-  }
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch('/api/profile');
+      if (response.ok) {
+        const data = await response.json();
+        setUserProfile(data);
+      }
+    } catch (err) {
+      console.error("Erro ao atualizar perfil:", err);
+    }
+  };
 
   return (
     <main className="app-container">

@@ -96,12 +96,15 @@ export default function PricingPage() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
         setUser(authUser);
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .single();
-        if (profile) setUserProfile(profile);
+        try {
+          const response = await fetch('/api/profile');
+          if (response.ok) {
+            const profile = await response.json();
+            setUserProfile(profile);
+          }
+        } catch (err) {
+          console.error("Erro ao carregar perfil:", err);
+        }
       }
     };
     getUser();
