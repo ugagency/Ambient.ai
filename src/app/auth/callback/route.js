@@ -25,13 +25,13 @@ export async function GET(request) {
         const { error: upsertError } = await supabaseAdmin.from('profiles').upsert({
           id: user.id,
           email: user.email,
-          full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-          avatar_url: user.user_metadata?.avatar_url || '',
           plan_type: 'free',
-        }, { onConflict: 'id', ignoreDuplicates: false });
+          daily_credits_used: 0,
+          extra_credits_balance: 0,
+        }, { onConflict: 'id' });
 
         if (upsertError) {
-          console.error(`❌ Erro no upsert do perfil para ${user.email}:`, upsertError.message);
+          console.error(`❌ Erro no upsert do perfil para ${user.email}:`, JSON.stringify(upsertError));
         } else {
           console.log(`✅ Perfil garantido (upsert) para: ${user.email}`);
         }
